@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import type { Coordinates, FishingSpot } from '../types';
 import { fishingSpots } from '../data/fishingSpots';
 import { fishSpecies } from '../data/fishSpecies';
+import { getNearbySpots } from '../services/spotIntelligence';
 
 interface FishingMapProps {
   coordinates: Coordinates;
@@ -42,16 +43,17 @@ function createSpotIcon(spot: FishingSpot) {
   });
 }
 
-function MapEvents({ onMapClick }: { onMapClick: (coords: Coordinates) => void }) {
+function MapEvents({ onMapClick, onLocationClick }: { onMapClick: (coords: Coordinates) => void; onLocationClick: (coords: Coordinates) => void }) {
   const map = useMap();
 
   useEffect(() => {
     const handler = (e: L.LeafletMouseEvent) => {
       onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+      onLocationClick({ lat: e.latlng.lat, lng: e.latlng.lng });
     };
     map.on('click', handler);
     return () => { map.off('click', handler); };
-  }, [map, onMapClick]);
+  }, [map, onMapClick, onLocationClick]);
 
   return null;
 }
@@ -72,6 +74,13 @@ function FlyToLocation({ coordinates }: { coordinates: Coordinates }) {
 
 export function FishingMap({ coordinates, onSpotSelect, onMapClick }: FishingMapProps) {
   const currentMonth = new Date().getMonth() + 1;
+  const [clickedLocation, setClickedLocation] = useState<Coordinates | null>(null);
+
+  const handleLocationClick = (coords: Coordinates) => {
+    setClickedLocation(coords);
+  };
+
+  const nearbySpots = clickedLocation ? getNearbySpots(clickedLocation, 5) : [];
 
   return (
     <div className="map-container">
@@ -82,8 +91,33 @@ export function FishingMap({ coordinates, onSpotSelect, onMapClick }: FishingMap
           <span><span className="legend-dot" style={{ background: '#eab308' }} /> Intermediate</span>
           <span><span className="legend-dot" style={{ background: '#ef4444' }} /> Advanced</span>
         </div>
-        <p className="legend-hint">Tap the map to check weather at any location</p>
+        <p className="legend-hint">Tap the map to see nearby spots & check weather</p>
       </div>
+
+      {/* Location Intelligence Panel */}
+      {clickedLocation && nearbySpots.length > 0 && (
+        <div className="map-intel-panel">
+          <div className="map-intel-header">
+            <h4>Nearby Fishing Spots</h4>
+            <button className="map-intel-close" onClick={() => setClickedLocation(null)}>✕</button>
+          </div>
+          <p className="map-intel-coords">{clickedLocation.lat.toFixed(3)}°N, {clickedLocation.lng.toFixed(3)}°E</p>
+          <div className="map-intel-list">
+            {nearbySpots.map(ns => (
+              <div key={ns.id} className="map-intel-item" onClick={() => onSpotSelect(ns)}>
+                <span className="map-intel-icon">{spotIcons[ns.waterType] || '🎣'}</span>
+                <div className="map-intel-info">
+                  <strong>{ns.name}</strong>
+                  <span className="map-intel-meta">{ns.distance.toFixed(1)} km {ns.bearing} — {ns.waterType}</span>
+                  <span className="map-intel-species">
+                    {ns.species.slice(0, 3).map(id => fishSpecies.find(s => s.id === id)?.name).filter(Boolean).join(', ')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <MapContainer
         center={[coordinates.lat, coordinates.lng]}
@@ -96,7 +130,7 @@ export function FishingMap({ coordinates, onSpotSelect, onMapClick }: FishingMap
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FlyToLocation coordinates={coordinates} />
-        <MapEvents onMapClick={onMapClick} />
+        <MapEvents onMapClick={onMapClick} onLocationClick={handleLocationClick} />
 
         {/* User location */}
         <CircleMarker
@@ -109,6 +143,15 @@ export function FishingMap({ coordinates, onSpotSelect, onMapClick }: FishingMap
             {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
           </Popup>
         </CircleMarker>
+
+        {/* Clicked location marker */}
+        {clickedLocation && (
+          <CircleMarker
+            center={[clickedLocation.lat, clickedLocation.lng]}
+            radius={8}
+            pathOptions={{ color: '#f97316', fillColor: '#f97316', fillOpacity: 0.5 }}
+          />
+        )}
 
         {/* Fishing spots */}
         {fishingSpots.map(spot => {
