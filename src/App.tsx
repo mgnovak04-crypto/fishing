@@ -13,7 +13,7 @@ function App() {
   const [view, setView] = useState<ViewMode>('dashboard');
   const [selectedSpot, setSelectedSpot] = useState<FishingSpot | null>(null);
   const { coordinates, loading: geoLoading, error: geoError, locationName, setCoordinates } = useGeolocation();
-  const { current, daily, hourly, marine, moon, conditions, loading: weatherLoading, error: weatherError } = useWeather(coordinates);
+  const { current, daily, hourly, marine, moon, conditions, loading: weatherLoading, error: weatherError, isOffline, cacheAge } = useWeather(coordinates);
 
   const handleSpotSelect = useCallback((spot: FishingSpot) => {
     setSelectedSpot(spot);
@@ -72,6 +72,8 @@ function App() {
                 locationName={locationName}
                 coordinates={coordinates}
                 onSpotClick={(coords) => { setCoordinates(coords); setView('dashboard'); }}
+                isOffline={isOffline}
+                cacheAge={cacheAge}
               />
             )}
 

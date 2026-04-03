@@ -2,6 +2,9 @@ import type { WeatherData, DailyForecast, HourlyForecast, MarineData, MoonData, 
 import { getWeatherDescription, getWeatherIcon, getWindDirection } from '../services/weatherApi';
 import { SpotBriefing } from './SpotBriefing';
 import { ActiveSpeciesPanel } from './ActiveSpeciesPanel';
+import { HourlyFishingChart } from './HourlyFishingChart';
+import { GearSuggestions } from './GearSuggestions';
+import { LicenseInfo } from './LicenseInfo';
 
 interface DashboardProps {
   weather: WeatherData;
@@ -13,11 +16,28 @@ interface DashboardProps {
   locationName: string | null;
   coordinates: Coordinates;
   onSpotClick: (coords: Coordinates) => void;
+  isOffline: boolean;
+  cacheAge: string | null;
 }
 
-export function Dashboard({ weather, daily, hourly, marine, moon, conditions, locationName, coordinates, onSpotClick }: DashboardProps) {
+export function Dashboard({ weather, daily, hourly, marine, moon, conditions, locationName, coordinates, onSpotClick, isOffline, cacheAge }: DashboardProps) {
   return (
     <div className="dashboard">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="offline-banner">
+          <span className="offline-dot" />
+          <div>
+            <strong>Offline Mode</strong>
+            <p>
+              {cacheAge
+                ? `Showing cached data from ${cacheAge}. Connect to update.`
+                : 'Using saved data. Weather updates when you have service.'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Fishing Score Hero */}
       <div className="score-hero" style={{ borderColor: conditions.color }}>
         <div className="score-circle" style={{ background: `conic-gradient(${conditions.color} ${conditions.overall * 3.6}deg, #1e293b ${conditions.overall * 3.6}deg)` }}>
@@ -191,6 +211,13 @@ export function Dashboard({ weather, daily, hourly, marine, moon, conditions, lo
         </div>
       </div>
 
+      {/* Hourly Fishing Activity Chart */}
+      <HourlyFishingChart
+        hourly={hourly}
+        sunrise={daily[0]?.sunrise || ''}
+        sunset={daily[0]?.sunset || ''}
+      />
+
       {/* Hourly Pressure Chart (text-based) */}
       <div className="card">
         <h3>Pressure Trend (Next 24h)</h3>
@@ -210,6 +237,12 @@ export function Dashboard({ weather, daily, hourly, marine, moon, conditions, lo
           })}
         </div>
       </div>
+
+      {/* Gear Suggestions */}
+      <GearSuggestions weather={weather} marine={marine} conditions={conditions} />
+
+      {/* License Info */}
+      <LicenseInfo />
     </div>
   );
 }
