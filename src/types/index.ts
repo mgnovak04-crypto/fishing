@@ -101,6 +101,41 @@ export interface FishingSpot {
   accessibility: string;
   bestSeason: string;
   imageUrl?: string;
+  // Detailed fields (optional for backwards compatibility)
+  depth?: { max: number; average: number; unit: string };
+  area?: number; // km²
+  elevation?: number; // meters above sea level
+  hotspots?: HotspotZone[];
+  speciesDetail?: SpotSpeciesInfo[];
+  structure?: string[];
+  bottomType?: string;
+  waterClarity?: string;
+  regulations?: string;
+  permitInfo?: string;
+  nearestTown?: string;
+  parkingInfo?: string;
+  boatAccess?: string;
+}
+
+export interface HotspotZone {
+  name: string;
+  description: string;
+  coordinates?: Coordinates;
+  targetSpecies: string[];
+  techniques: string[];
+  bestTime: string;
+  depthRange?: string;
+}
+
+export interface SpotSpeciesInfo {
+  speciesId: string;
+  abundance: 'common' | 'moderate' | 'occasional' | 'rare';
+  averageSize: string;
+  recordSize?: string;
+  localTechniques: string[];
+  localTips: string;
+  bestMonths: number[];
+  depthRange: string;
 }
 
 export interface FishingConditions {

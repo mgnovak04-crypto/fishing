@@ -1690,6 +1690,130 @@ body {
   color: #22d3ee;
 }
 
+/* === Hotspot Zones === */
+.hotspots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hotspot-item {
+  padding: 14px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--success);
+}
+
+.hotspot-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.hotspot-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--success);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hotspot-header h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hotspot-desc {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.hotspot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.hotspot-tag {
+  padding: 3px 8px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+  border-radius: 12px;
+  font-size: 0.72rem;
+}
+
+/* === Species Detail (rich info) === */
+.species-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.species-detail-item {
+  padding: 14px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+
+.species-detail-item.off-season {
+  opacity: 0.55;
+  border-left-color: var(--text-muted);
+}
+
+.species-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.species-card-emoji {
+  font-size: 1.6rem;
+}
+
+.species-detail-header h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.species-detail-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.species-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.species-detail-techniques {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.structure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Leaflet overrides */
 .leaflet-container {
   background: var(--bg) !important;
