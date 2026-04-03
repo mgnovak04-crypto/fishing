@@ -1,5 +1,7 @@
-import type { WeatherData, DailyForecast, HourlyForecast, MarineData, MoonData, FishingConditions } from '../types';
+import type { WeatherData, DailyForecast, HourlyForecast, MarineData, MoonData, FishingConditions, Coordinates } from '../types';
 import { getWeatherDescription, getWeatherIcon, getWindDirection } from '../services/weatherApi';
+import { SpotBriefing } from './SpotBriefing';
+import { ActiveSpeciesPanel } from './ActiveSpeciesPanel';
 
 interface DashboardProps {
   weather: WeatherData;
@@ -9,9 +11,11 @@ interface DashboardProps {
   moon: MoonData;
   conditions: FishingConditions;
   locationName: string | null;
+  coordinates: Coordinates;
+  onSpotClick: (coords: Coordinates) => void;
 }
 
-export function Dashboard({ weather, daily, hourly, marine, moon, conditions, locationName }: DashboardProps) {
+export function Dashboard({ weather, daily, hourly, marine, moon, conditions, locationName, coordinates, onSpotClick }: DashboardProps) {
   return (
     <div className="dashboard">
       {/* Fishing Score Hero */}
@@ -47,6 +51,19 @@ export function Dashboard({ weather, daily, hourly, marine, moon, conditions, lo
           ))}
         </div>
       </div>
+
+      {/* Tactical Spot Briefing */}
+      <SpotBriefing
+        weather={weather}
+        marine={marine}
+        moon={moon}
+        coordinates={coordinates}
+        locationName={locationName}
+        onSpotClick={onSpotClick}
+      />
+
+      {/* Active Species with Condition Matching */}
+      <ActiveSpeciesPanel weather={weather} marine={marine} moon={moon} />
 
       {/* Current Weather */}
       <div className="card">

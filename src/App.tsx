@@ -61,7 +61,7 @@ function App() {
           </div>
         ) : (
           <>
-            {view === 'dashboard' && current && conditions && (
+            {view === 'dashboard' && current && conditions && coordinates && (
               <Dashboard
                 weather={current}
                 daily={daily}
@@ -70,6 +70,8 @@ function App() {
                 moon={moon}
                 conditions={conditions}
                 locationName={locationName}
+                coordinates={coordinates}
+                onSpotClick={(coords) => { setCoordinates(coords); setView('dashboard'); }}
               />
             )}
 
