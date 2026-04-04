@@ -13,6 +13,7 @@ interface ActiveSpeciesInfo {
   name: string;
   norwegianName: string;
   image: string;
+  habitat: 'freshwater' | 'saltwater' | 'both';
   matchScore: number;
   matchReasons: string[];
   techniques: string[];
@@ -164,6 +165,7 @@ export function getActiveSpeciesWithScoring(
         name: sp.name,
         norwegianName: sp.norwegianName,
         image: sp.image,
+        habitat: sp.habitat,
         matchScore: Math.min(100, Math.max(0, matchScore)),
         matchReasons,
         techniques: sp.techniques,

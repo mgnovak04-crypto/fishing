@@ -7,6 +7,19 @@ interface ActiveSpeciesPanelProps {
   moon: MoonData;
 }
 
+interface SpeciesEntry {
+  id: string;
+  name: string;
+  norwegianName: string;
+  image: string;
+  habitat: 'freshwater' | 'saltwater' | 'both';
+  matchScore: number;
+  matchReasons: string[];
+  techniques: string[];
+  bestTimeOfDay: string[];
+  tips: string;
+}
+
 export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanelProps) {
   const species = getActiveSpeciesWithScoring(weather, marine, moon);
 
@@ -19,6 +32,9 @@ export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanel
     );
   }
 
+  const freshwater = species.filter(sp => sp.habitat === 'freshwater' || sp.habitat === 'both');
+  const saltwater = species.filter(sp => sp.habitat === 'saltwater' || sp.habitat === 'both');
+
   return (
     <div className="card active-species-card">
       <h3>What's Biting Right Now</h3>
@@ -26,60 +42,90 @@ export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanel
         Species ranked by how well current conditions match their preferences
       </p>
 
-      <div className="active-species-list">
-        {species.map((sp, index) => (
-          <div key={sp.id} className="active-species-item">
-            <div className="active-species-rank">
-              <span className="rank-number">#{index + 1}</span>
-              <div
-                className="match-ring"
-                style={{
-                  background: `conic-gradient(${getMatchColor(sp.matchScore)} ${sp.matchScore * 3.6}deg, #1e293b ${sp.matchScore * 3.6}deg)`,
-                }}
-              >
-                <div className="match-ring-inner">
-                  <span>{sp.matchScore}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="active-species-info">
-              <div className="active-species-header">
-                <span className="active-species-emoji">{sp.image}</span>
-                <div>
-                  <h4>{sp.name}</h4>
-                  <span className="active-species-nor">{sp.norwegianName}</span>
-                </div>
-              </div>
-
-              <div className="match-reasons">
-                {sp.matchReasons.slice(0, 4).map((reason, i) => (
-                  <span
-                    key={i}
-                    className={`match-reason ${reason.includes('outside') || reason.includes('Off') ? 'negative' : 'positive'}`}
-                  >
-                    {reason.includes('outside') || reason.includes('Off') ? '✗' : '✓'} {reason}
-                  </span>
-                ))}
-              </div>
-
-              <div className="active-species-meta">
-                <div className="meta-row">
-                  <span className="meta-label">Try:</span>
-                  <span className="meta-value">{sp.techniques.slice(0, 3).join(', ')}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Best at:</span>
-                  <span className="meta-value">{sp.bestTimeOfDay.join(', ')}</span>
-                </div>
-              </div>
-
-              <div className="species-quick-tip">
-                <span className="tip-icon">💡</span> {sp.tips}
-              </div>
-            </div>
+      {freshwater.length > 0 && (
+        <div className="species-habitat-section">
+          <div className="habitat-header">
+            <span className="habitat-icon">🏔️</span>
+            <h4>Freshwater</h4>
+            <span className="habitat-count">{freshwater.length} species</span>
           </div>
-        ))}
+          <div className="active-species-list">
+            {freshwater.map((sp, index) => (
+              <SpeciesCard key={sp.id} sp={sp} rank={index + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {saltwater.length > 0 && (
+        <div className="species-habitat-section">
+          <div className="habitat-header">
+            <span className="habitat-icon">🌊</span>
+            <h4>Saltwater</h4>
+            <span className="habitat-count">{saltwater.length} species</span>
+          </div>
+          <div className="active-species-list">
+            {saltwater.map((sp, index) => (
+              <SpeciesCard key={sp.id} sp={sp} rank={index + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SpeciesCard({ sp, rank }: { sp: SpeciesEntry; rank: number }) {
+  return (
+    <div className="active-species-item">
+      <div className="active-species-rank">
+        <span className="rank-number">#{rank}</span>
+        <div
+          className="match-ring"
+          style={{
+            background: `conic-gradient(${getMatchColor(sp.matchScore)} ${sp.matchScore * 3.6}deg, #1e293b ${sp.matchScore * 3.6}deg)`,
+          }}
+        >
+          <div className="match-ring-inner">
+            <span>{sp.matchScore}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="active-species-info">
+        <div className="active-species-header">
+          <span className="active-species-emoji">{sp.image}</span>
+          <div>
+            <h4>{sp.name}</h4>
+            <span className="active-species-nor">{sp.norwegianName}</span>
+          </div>
+        </div>
+
+        <div className="match-reasons">
+          {sp.matchReasons.slice(0, 4).map((reason, i) => (
+            <span
+              key={i}
+              className={`match-reason ${reason.includes('outside') || reason.includes('Off') ? 'negative' : 'positive'}`}
+            >
+              {reason.includes('outside') || reason.includes('Off') ? '✗' : '✓'} {reason}
+            </span>
+          ))}
+        </div>
+
+        <div className="active-species-meta">
+          <div className="meta-row">
+            <span className="meta-label">Try:</span>
+            <span className="meta-value">{sp.techniques.slice(0, 3).join(', ')}</span>
+          </div>
+          <div className="meta-row">
+            <span className="meta-label">Best at:</span>
+            <span className="meta-value">{sp.bestTimeOfDay.join(', ')}</span>
+          </div>
+        </div>
+
+        <div className="species-quick-tip">
+          <span className="tip-icon">💡</span> {sp.tips}
+        </div>
       </div>
     </div>
   );
