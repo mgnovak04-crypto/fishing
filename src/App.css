@@ -1309,6 +1309,23 @@ body {
   font-size: 0.85rem;
 }
 
+.species-off-season {
+  opacity: 0.55;
+  border-left: 2px solid var(--text-muted);
+}
+
+.off-season-tag {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .active-species-list {
   display: flex;
   flex-direction: column;

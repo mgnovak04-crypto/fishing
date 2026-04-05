@@ -14,6 +14,7 @@ interface ActiveSpeciesInfo {
   norwegianName: string;
   image: string;
   habitat: 'freshwater' | 'saltwater' | 'both';
+  inSeason: boolean;
   matchScore: number;
   matchReasons: string[];
   techniques: string[];
@@ -96,25 +97,28 @@ export function getActiveSpeciesWithScoring(
 
   const scored = fishSpecies
     .filter(sp => {
-      // Season filter
-      const inSeason = sp.season.start <= sp.season.end
-        ? currentMonth >= sp.season.start && currentMonth <= sp.season.end
-        : currentMonth >= sp.season.start || currentMonth <= sp.season.end;
-      if (!inSeason) return false;
-
       // Location filter — only show species found in nearby waters
       if (localSpeciesIds && !localSpeciesIds.has(sp.id)) return false;
-
       return true;
     })
     .map(sp => {
-      let matchScore = 50;
+      let matchScore = 30; // base score
       const matchReasons: string[] = [];
 
-      // Peak season bonus
-      if (sp.season.peak.includes(currentMonth)) {
-        matchScore += 15;
+      // Season scoring — big factor
+      const inSeason = sp.season.start <= sp.season.end
+        ? currentMonth >= sp.season.start && currentMonth <= sp.season.end
+        : currentMonth >= sp.season.start || currentMonth <= sp.season.end;
+
+      if (!inSeason) {
+        matchScore -= 20;
+        matchReasons.push('Off season');
+      } else if (sp.season.peak.includes(currentMonth)) {
+        matchScore += 25;
         matchReasons.push('Peak season right now');
+      } else {
+        matchScore += 15;
+        matchReasons.push('In season');
       }
 
       // Temperature match
@@ -191,6 +195,7 @@ export function getActiveSpeciesWithScoring(
         norwegianName: sp.norwegianName,
         image: sp.image,
         habitat: sp.habitat,
+        inSeason,
         matchScore: Math.min(100, Math.max(0, matchScore)),
         matchReasons,
         techniques: sp.techniques,

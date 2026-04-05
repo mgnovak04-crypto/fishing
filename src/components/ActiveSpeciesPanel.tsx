@@ -14,6 +14,7 @@ interface SpeciesEntry {
   norwegianName: string;
   image: string;
   habitat: 'freshwater' | 'saltwater' | 'both';
+  inSeason: boolean;
   matchScore: number;
   matchReasons: string[];
   techniques: string[];
@@ -35,8 +36,8 @@ export function ActiveSpeciesPanel({ weather, marine, moon, coordinates }: Activ
   if (species.length === 0) {
     return (
       <div className="card">
-        <h3>Active Species</h3>
-        <p className="no-species">No species currently in season for this area.</p>
+        <h3>Species in Your Area</h3>
+        <p className="no-species">No known fishing spots within 25 km.</p>
       </div>
     );
   }
@@ -44,18 +45,17 @@ export function ActiveSpeciesPanel({ weather, marine, moon, coordinates }: Activ
   const freshwater = species.filter(sp => sp.habitat === 'freshwater' || sp.habitat === 'both');
   const saltwater = species.filter(sp => sp.habitat === 'saltwater' || sp.habitat === 'both');
 
-  // Determine which sections to show based on nearby water types
   const hasFreshwater = nearbyWaterTypes.some(t => t === 'lake' || t === 'river');
   const hasSaltwater = nearbyWaterTypes.some(t => t === 'fjord' || t === 'coast' || t === 'sea');
   const waterDesc = nearbyWaterTypes.map(t => waterTypeLabels[t] || t).join(', ');
 
   return (
     <div className="card active-species-card">
-      <h3>What's Biting Right Now</h3>
+      <h3>Species in Your Area</h3>
       <p className="species-panel-subtitle">
         {isLocationFiltered
-          ? `Based on ${waterDesc} within 25 km of you`
-          : 'Species ranked by how well current conditions match their preferences'}
+          ? `${waterDesc} within 25 km — ranked by chance of biting right now`
+          : 'All species ranked by current conditions'}
       </p>
 
       {freshwater.length > 0 && (hasFreshwater || !isLocationFiltered) && (
@@ -93,7 +93,7 @@ export function ActiveSpeciesPanel({ weather, marine, moon, coordinates }: Activ
 
 function SpeciesCard({ sp, rank }: { sp: SpeciesEntry; rank: number }) {
   return (
-    <div className="active-species-item">
+    <div className={`active-species-item ${sp.inSeason ? '' : 'species-off-season'}`}>
       <div className="active-species-rank">
         <span className="rank-number">#{rank}</span>
         <div
@@ -103,7 +103,7 @@ function SpeciesCard({ sp, rank }: { sp: SpeciesEntry; rank: number }) {
           }}
         >
           <div className="match-ring-inner">
-            <span>{sp.matchScore}</span>
+            <span>{sp.matchScore}%</span>
           </div>
         </div>
       </div>
@@ -112,7 +112,10 @@ function SpeciesCard({ sp, rank }: { sp: SpeciesEntry; rank: number }) {
         <div className="active-species-header">
           <span className="active-species-emoji">{sp.image}</span>
           <div>
-            <h4>{sp.name}</h4>
+            <h4>
+              {sp.name}
+              {!sp.inSeason && <span className="off-season-tag">Off Season</span>}
+            </h4>
             <span className="active-species-nor">{sp.norwegianName}</span>
           </div>
         </div>
@@ -151,5 +154,6 @@ function getMatchColor(score: number): string {
   if (score >= 75) return '#22c55e';
   if (score >= 55) return '#84cc16';
   if (score >= 40) return '#eab308';
-  return '#f97316';
+  if (score >= 20) return '#f97316';
+  return '#ef4444';
 }
