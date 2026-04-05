@@ -54,7 +54,7 @@ export function ActiveSpeciesPanel({ weather, marine, moon, coordinates }: Activ
       <h3>What's Biting Right Now</h3>
       <p className="species-panel-subtitle">
         {isLocationFiltered
-          ? `Based on ${waterDesc} within 50 km of you`
+          ? `Based on ${waterDesc} within 25 km of you`
           : 'Species ranked by how well current conditions match their preferences'}
       </p>
 

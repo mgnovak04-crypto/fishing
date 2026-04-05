@@ -87,7 +87,7 @@ export function getActiveSpeciesWithScoring(
   let nearbyWaterTypes: Set<string> | null = null;
   if (coordinates) {
     const nearby = fishingSpots
-      .filter(spot => calculateDistance(coordinates, spot.coordinates) <= 50);
+      .filter(spot => calculateDistance(coordinates, spot.coordinates) <= 25);
     if (nearby.length > 0) {
       localSpeciesIds = new Set(nearby.flatMap(spot => spot.species));
       nearbyWaterTypes = new Set(nearby.map(spot => spot.waterType));
