@@ -83,7 +83,7 @@ export function Dashboard({ weather, daily, hourly, marine, moon, conditions, lo
       />
 
       {/* Active Species with Condition Matching */}
-      <ActiveSpeciesPanel weather={weather} marine={marine} moon={moon} />
+      <ActiveSpeciesPanel weather={weather} marine={marine} moon={moon} coordinates={coordinates} />
 
       {/* Current Weather */}
       <div className="card">

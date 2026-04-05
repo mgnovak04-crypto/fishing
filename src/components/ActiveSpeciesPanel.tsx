@@ -1,10 +1,11 @@
-import type { WeatherData, MarineData, MoonData } from '../types';
+import type { WeatherData, MarineData, MoonData, Coordinates } from '../types';
 import { getActiveSpeciesWithScoring } from '../services/spotIntelligence';
 
 interface ActiveSpeciesPanelProps {
   weather: WeatherData;
   marine: MarineData | null;
   moon: MoonData;
+  coordinates: Coordinates;
 }
 
 interface SpeciesEntry {
@@ -20,8 +21,16 @@ interface SpeciesEntry {
   tips: string;
 }
 
-export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanelProps) {
-  const species = getActiveSpeciesWithScoring(weather, marine, moon);
+const waterTypeLabels: Record<string, string> = {
+  lake: 'Lakes',
+  river: 'Rivers',
+  fjord: 'Fjords',
+  coast: 'Coast',
+  sea: 'Open Sea',
+};
+
+export function ActiveSpeciesPanel({ weather, marine, moon, coordinates }: ActiveSpeciesPanelProps) {
+  const { species, nearbyWaterTypes, isLocationFiltered } = getActiveSpeciesWithScoring(weather, marine, moon, coordinates);
 
   if (species.length === 0) {
     return (
@@ -35,14 +44,21 @@ export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanel
   const freshwater = species.filter(sp => sp.habitat === 'freshwater' || sp.habitat === 'both');
   const saltwater = species.filter(sp => sp.habitat === 'saltwater' || sp.habitat === 'both');
 
+  // Determine which sections to show based on nearby water types
+  const hasFreshwater = nearbyWaterTypes.some(t => t === 'lake' || t === 'river');
+  const hasSaltwater = nearbyWaterTypes.some(t => t === 'fjord' || t === 'coast' || t === 'sea');
+  const waterDesc = nearbyWaterTypes.map(t => waterTypeLabels[t] || t).join(', ');
+
   return (
     <div className="card active-species-card">
       <h3>What's Biting Right Now</h3>
       <p className="species-panel-subtitle">
-        Species ranked by how well current conditions match their preferences
+        {isLocationFiltered
+          ? `Based on ${waterDesc} within 50 km of you`
+          : 'Species ranked by how well current conditions match their preferences'}
       </p>
 
-      {freshwater.length > 0 && (
+      {freshwater.length > 0 && (hasFreshwater || !isLocationFiltered) && (
         <div className="species-habitat-section">
           <div className="habitat-header">
             <span className="habitat-icon">🏔️</span>
@@ -57,7 +73,7 @@ export function ActiveSpeciesPanel({ weather, marine, moon }: ActiveSpeciesPanel
         </div>
       )}
 
-      {saltwater.length > 0 && (
+      {saltwater.length > 0 && (hasSaltwater || !isLocationFiltered) && (
         <div className="species-habitat-section">
           <div className="habitat-header">
             <span className="habitat-icon">🌊</span>

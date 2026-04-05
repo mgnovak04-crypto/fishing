@@ -21,6 +21,12 @@ interface ActiveSpeciesInfo {
   tips: string;
 }
 
+interface ActiveSpeciesResult {
+  species: ActiveSpeciesInfo[];
+  nearbyWaterTypes: string[];
+  isLocationFiltered: boolean;
+}
+
 interface TacticalAdvice {
   positioning: string[];
   structure: string[];
@@ -70,17 +76,36 @@ export function getActiveSpeciesWithScoring(
   weather: WeatherData,
   marine: MarineData | null,
   moon: MoonData,
-): ActiveSpeciesInfo[] {
+  coordinates?: Coordinates,
+): ActiveSpeciesResult {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentHour = now.getHours();
 
-  return fishSpecies
+  // Find species present in nearby spots (within 50km radius)
+  let localSpeciesIds: Set<string> | null = null;
+  let nearbyWaterTypes: Set<string> | null = null;
+  if (coordinates) {
+    const nearby = fishingSpots
+      .filter(spot => calculateDistance(coordinates, spot.coordinates) <= 50);
+    if (nearby.length > 0) {
+      localSpeciesIds = new Set(nearby.flatMap(spot => spot.species));
+      nearbyWaterTypes = new Set(nearby.map(spot => spot.waterType));
+    }
+  }
+
+  const scored = fishSpecies
     .filter(sp => {
-      if (sp.season.start <= sp.season.end) {
-        return currentMonth >= sp.season.start && currentMonth <= sp.season.end;
-      }
-      return currentMonth >= sp.season.start || currentMonth <= sp.season.end;
+      // Season filter
+      const inSeason = sp.season.start <= sp.season.end
+        ? currentMonth >= sp.season.start && currentMonth <= sp.season.end
+        : currentMonth >= sp.season.start || currentMonth <= sp.season.end;
+      if (!inSeason) return false;
+
+      // Location filter — only show species found in nearby waters
+      if (localSpeciesIds && !localSpeciesIds.has(sp.id)) return false;
+
+      return true;
     })
     .map(sp => {
       let matchScore = 50;
@@ -174,6 +199,12 @@ export function getActiveSpeciesWithScoring(
       };
     })
     .sort((a, b) => b.matchScore - a.matchScore);
+
+  return {
+    species: scored,
+    nearbyWaterTypes: nearbyWaterTypes ? Array.from(nearbyWaterTypes) : [],
+    isLocationFiltered: localSpeciesIds !== null,
+  };
 }
 
 function estimateWaterTemp(airTemp: number): number {
