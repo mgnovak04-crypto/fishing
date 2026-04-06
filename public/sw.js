@@ -1,6 +1,6 @@
-const CACHE_NAME = 'norgefiske-v2';
-const STATIC_CACHE = 'norgefiske-static-v2';
-const DATA_CACHE = 'norgefiske-data-v2';
+const CACHE_VERSION = 'v5';
+const STATIC_CACHE = `norgefiske-static-${CACHE_VERSION}`;
+const DATA_CACHE = `norgefiske-data-${CACHE_VERSION}`;
 
 // App shell files to cache immediately
 const STATIC_ASSETS = [
@@ -9,50 +9,57 @@ const STATIC_ASSETS = [
   '/fishing/manifest.json',
 ];
 
-// Install: cache app shell
+// Install: cache app shell and activate immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// Activate: delete ALL old caches (any name not in current version)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((key) => key !== STATIC_CACHE && key !== DATA_CACHE && key !== CACHE_NAME)
+          .filter((key) => key !== STATIC_CACHE && key !== DATA_CACHE)
           .map((key) => caches.delete(key))
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for static assets
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Navigation requests (HTML) — network-first so new builds always load
+  if (event.request.mode === 'navigate' || (event.request.method === 'GET' && event.request.headers.get('accept')?.includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/fishing/index.html')))
+    );
+    return;
+  }
 
   // API calls (weather data) — network first, fall back to cache
   if (url.hostname === 'api.open-meteo.com' || url.hostname === 'nominatim.openstreetmap.org') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Clone and cache the response
           const clone = response.clone();
-          caches.open(DATA_CACHE).then((cache) => {
-            cache.put(event.request, clone);
-          });
+          caches.open(DATA_CACHE).then((cache) => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => {
-          // Offline — return cached data if available
-          return caches.match(event.request);
-        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
@@ -64,39 +71,25 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         return fetch(event.request).then((response) => {
           const clone = response.clone();
-          caches.open(DATA_CACHE).then((cache) => {
-            cache.put(event.request, clone);
-          });
+          caches.open(DATA_CACHE).then((cache) => cache.put(event.request, clone));
           return response;
-        }).catch(() => {
-          // Return a blank tile if offline and not cached
-          return new Response('', { status: 404 });
-        });
+        }).catch(() => new Response('', { status: 404 }));
       })
     );
     return;
   }
 
-  // Static assets — cache first, then network
+  // Static assets (JS/CSS) — cache first, then network
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        // Cache new static assets (JS, CSS bundles)
-        if (response.ok && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('.html'))) {
+        if (response.ok && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
           const clone = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put(event.request, clone);
-          });
+          caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => {
-        // Offline fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/fishing/index.html');
-        }
-        return new Response('Offline', { status: 503 });
-      });
+      }).catch(() => new Response('Offline', { status: 503 }));
     })
   );
 });
