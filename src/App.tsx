@@ -12,7 +12,7 @@ import './App.css';
 function App() {
   const [view, setView] = useState<ViewMode>('dashboard');
   const [selectedSpot, setSelectedSpot] = useState<FishingSpot | null>(null);
-  const { coordinates, loading: geoLoading, error: geoError, locationName, setCoordinates } = useGeolocation();
+  const { coordinates, loading: geoLoading, error: geoError, locationName, setCoordinates, skipLocation } = useGeolocation();
   const { current, daily, hourly, marine, moon, conditions, loading: weatherLoading, error: weatherError, isOffline, cacheAge } = useWeather(coordinates);
 
   const handleSpotSelect = useCallback((spot: FishingSpot) => {
@@ -35,7 +35,7 @@ function App() {
   }, []);
 
   if (geoLoading) {
-    return <LoadingScreen message="Finding your location..." />;
+    return <LoadingScreen message="Finding your location..." onSkip={skipLocation} skipLabel="Use Oslo instead" />;
   }
 
   const isLoading = weatherLoading && !current;
